@@ -9,6 +9,7 @@ import torch
 
 from steer_sao.audio import save_audio
 from steer_sao.controls import extract_control_features_from_audio
+from steer_sao.datasets import hf_audio_dataset_to_manifest
 from steer_sao.manifest import load_manifest
 from steer_sao.model import SteerSAO
 from steer_sao.training.trainer import train_adapter_from_config
@@ -51,6 +52,20 @@ def prepare_data(args) -> None:
 
 def train(args) -> None:
     train_adapter_from_config(args.config)
+
+
+def hf_manifest(args) -> None:
+    count = hf_audio_dataset_to_manifest(
+        dataset=args.dataset,
+        split=args.split,
+        out_manifest=args.out,
+        audio_dir=args.audio_dir,
+        audio_column=args.audio_column,
+        text_column=args.text_column,
+        limit=args.limit,
+        trust_remote_code=args.trust_remote_code,
+    )
+    print("Wrote %s rows to %s" % (count, args.out))
 
 
 def generate(args) -> None:
@@ -97,6 +112,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_train.add_argument("--config", required=True)
     p_train.set_defaults(func=train)
 
+    p_hf = sub.add_parser("hf-manifest", help="Fetch an HF audio-text dataset into JSONL")
+    p_hf.add_argument("--dataset", required=True)
+    p_hf.add_argument("--split", default="train")
+    p_hf.add_argument("--out", required=True)
+    p_hf.add_argument("--audio-dir", required=True)
+    p_hf.add_argument("--audio-column", default="audio")
+    p_hf.add_argument("--text-column", default="text")
+    p_hf.add_argument("--limit", type=int)
+    p_hf.add_argument("--trust-remote-code", action="store_true")
+    p_hf.set_defaults(func=hf_manifest)
+
     p_gen = sub.add_parser("generate", help="Generate controlled music")
     p_gen.add_argument("--prompt", required=True)
     p_gen.add_argument("--duration", type=float, required=True)
@@ -127,4 +153,3 @@ def main(argv=None) -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -17,7 +17,7 @@ MuseControlLite checkpoints target Stable Audio Open 1.0 and are not shape-compa
 Use Python 3.10 or newer. The pinned upstream SA3 dependency is:
 
 ```bash
-uv sync --extra dev --extra train
+uv sync --extra dev --extra data --extra train
 ```
 
 If `uv` is not available:
@@ -36,6 +36,20 @@ huggingface-cli login
 or set `HF_TOKEN` in your shell. Do not put real tokens in tracked files.
 
 ## Usage
+
+For Linux GPU setup, dataset options, preprocessing, and first training runs, see
+[docs/linux_gpu_start.md](docs/linux_gpu_start.md).
+
+Fetch a Hugging Face audio-text dataset into a local manifest:
+
+```bash
+steer-sao hf-manifest \
+  --dataset mrfakename/cc0-music-captioned \
+  --split train \
+  --out data/cc0_music/train_50.jsonl \
+  --audio-dir data/cc0_music/audio \
+  --limit 50
+```
 
 Prepare control features:
 
@@ -81,4 +95,3 @@ Optional precomputed paths may be stored under `controls`, for example:
 - Adapter checkpoints are saved as `safetensors` with metadata describing the base SA3 model,
   model revision, control set, and adapter config.
 - If a Hugging Face token was pasted into chat or logs, rotate it before real runs.
-

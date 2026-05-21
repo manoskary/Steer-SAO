@@ -26,6 +26,9 @@ dev = [
   "pytest>=9.0.3",
   "ruff>=0.15.9",
 ]
+data = [
+  "datasets>=4.0.0",
+]
 train = [
   "pytorch-lightning==2.5.5",
   "wandb>=0.22.0",
@@ -40,4 +43,3 @@ packages = ["src/steer_sao"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-
