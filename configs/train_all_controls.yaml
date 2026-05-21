@@ -1,0 +1,30 @@
+model: small-music
+output_dir: checkpoints
+adapter_name: mcl_sa3_all_controls
+manifest: data/train.jsonl
+controls:
+  - melody_stereo
+  - rhythm
+  - dynamics
+  - audio
+training:
+  max_steps: 10000
+  batch_size: 1
+  learning_rate: 0.0001
+  weight_decay: 0.01
+  seed: 42
+  save_every: 1000
+  duration_padding_sec: 6.0
+  cfg_dropout_prob: 0.1
+  log_every: 25
+guidance:
+  cfg_scale_text: 7.0
+  cfg_scale_attr: 1.5
+  cfg_scale_audio: 1.0
+adapter:
+  embed_dim: 1024
+  control_dim: 1024
+  position_encoding: true
+  train_audio_branch: true
+  train_attribute_branch: true
+
