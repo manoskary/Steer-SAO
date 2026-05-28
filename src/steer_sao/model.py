@@ -28,6 +28,36 @@ from steer_sao.types import (
 )
 
 
+def _is_cuda_kernel_image_error(exc: RuntimeError) -> bool:
+    return "no kernel image is available for execution on the device" in str(exc).lower()
+
+
+def _cuda_kernel_image_help(device: Optional[str]) -> str:
+    details = []
+    if torch.cuda.is_available():
+        try:
+            index = torch.device(device or "cuda:0").index or 0
+            name = torch.cuda.get_device_name(index)
+            capability = torch.cuda.get_device_capability(index)
+            details.append(f"GPU {index}: {name} (sm_{capability[0]}{capability[1]})")
+        except Exception:
+            pass
+        try:
+            details.append(f"PyTorch CUDA: {torch.version.cuda or 'unknown'}")
+            details.append("compiled arches: " + ", ".join(torch.cuda.get_arch_list()))
+        except Exception:
+            pass
+
+    suffix = " " + "; ".join(details) if details else ""
+    return (
+        "CUDA rejected the installed PyTorch wheel while loading Stable Audio 3. "
+        "On Hugging Face ZeroGPU Blackwell hardware, install PyTorch CUDA 12.8+ wheels "
+        "(for example torch==2.7.1+cu128 and torchaudio==2.7.1+cu128 from "
+        "https://download.pytorch.org/whl/cu128)."
+        f"{suffix}"
+    )
+
+
 class SteerSAO:
     def __init__(
         self,
@@ -61,11 +91,16 @@ class SteerSAO:
                 "stable-audio-3 is required. Install this package with its dependencies first."
             ) from exc
 
-        sa3_model = StableAudioModel.from_pretrained(
-            model,
-            device=device,
-            model_half=model_half,
-        )
+        try:
+            sa3_model = StableAudioModel.from_pretrained(
+                model,
+                device=device,
+                model_half=model_half,
+            )
+        except RuntimeError as exc:
+            if _is_cuda_kernel_image_error(exc):
+                raise RuntimeError(_cuda_kernel_image_help(device)) from exc
+            raise
         instance = cls(sa3_model)
         if adapter_path:
             instance.load_adapter(adapter_path)
