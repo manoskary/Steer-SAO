@@ -114,8 +114,8 @@ If the Gradio Space is a separate repository that installs Steer-SAO from GitHub
 
 ```text
 --extra-index-url https://download.pytorch.org/whl/cu128
-torch==2.7.1+cu128
-torchaudio==2.7.1+cu128
+torch==2.8.0+cu128
+torchaudio==2.8.0+cu128
 gradio==6.15.0
 huggingface_hub>=0.36.0
 steer-sao @ git+https://github.com/manoskary/Steer-SAO.git@main

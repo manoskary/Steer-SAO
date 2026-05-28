@@ -4,8 +4,8 @@
 # ZeroGPU can assign Blackwell sm_120 hardware; use PyTorch's CUDA 12.8 wheels
 # because the default PyPI CUDA 12.6 build only carries kernels through sm_90.
 --extra-index-url https://download.pytorch.org/whl/cu128
-torch==2.7.1+cu128
-torchaudio==2.7.1+cu128
+torch==2.8.0+cu128
+torchaudio==2.8.0+cu128
 gradio>=5.0.0
 huggingface_hub>=0.36.0
 numpy>=2.2.6

@@ -12,8 +12,8 @@ license = { text = "MIT" }
 authors = [{ name = "Steer-SAO contributors" }]
 dependencies = [
   "stable-audio-3 @ git+https://github.com/Stability-AI/stable-audio-3.git@fef6d875fbc7166d2e9daae035279a1c70ee3d61",
-  "torch==2.7.1",
-  "torchaudio==2.7.1",
+  "torch>=2.8,<2.12",
+  "torchaudio>=2.8,<2.12",
   "numpy>=2.2.6",
   "soundfile>=0.13.1",
   "safetensors>=0.7.0",

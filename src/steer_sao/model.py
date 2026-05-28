@@ -52,7 +52,7 @@ def _cuda_kernel_image_help(device: Optional[str]) -> str:
     return (
         "CUDA rejected the installed PyTorch wheel while loading Stable Audio 3. "
         "On Hugging Face ZeroGPU Blackwell hardware, install PyTorch CUDA 12.8+ wheels "
-        "(for example torch==2.7.1+cu128 and torchaudio==2.7.1+cu128 from "
+        "(for example torch==2.8.0+cu128 and torchaudio==2.8.0+cu128 from "
         "https://download.pytorch.org/whl/cu128)."
         f"{suffix}"
     )
