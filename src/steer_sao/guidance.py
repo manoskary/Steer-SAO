@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import torch
 from torch import nn
@@ -62,6 +62,8 @@ class ControlledDiTModel(nn.Module):
         audio_control_tokens: Optional[torch.Tensor] = None,
         **kwargs,
     ) -> torch.Tensor:
+        kwargs = dict(kwargs)
+        kwargs.pop("batch_cfg", None)
         guidance = control_guidance or GuidanceScales(text=float(cfg_scale))
 
         has_text_guidance = cross_attn_cond is not None and guidance.text != 1.0
@@ -154,6 +156,12 @@ class ControlledDiTModel(nn.Module):
         cross_mask_cat = _cat(cross_masks) if cross_masks else None
         attr_cat = _cat(attr_tokens) if attr_tokens else None
         audio_cat = _cat(audio_tokens) if audio_tokens else None
+        branch_kwargs = {
+            key: _repeat_or_none(value, branch_count)
+            if torch.is_tensor(value) and value.shape[:1] == (batch_size,)
+            else value
+            for key, value in kwargs.items()
+        }
 
         with use_control_context(ActiveControlContext(attr_cat, audio_cat)):
             output = self.inner(
@@ -168,7 +176,7 @@ class ControlledDiTModel(nn.Module):
                 prepend_cond_mask=_repeat_or_none(prepend_cond_mask, branch_count),
                 cfg_scale=1.0,
                 batch_cfg=True,
-                **kwargs,
+                **branch_kwargs,
             )
 
         outputs = _split(output, names, batch_size)
@@ -188,4 +196,3 @@ class ControlledDiTModel(nn.Module):
             result = result + guidance.audio * (audio - attr_base)
 
         return result
-
