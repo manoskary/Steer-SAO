@@ -40,6 +40,9 @@ steer-sao = "steer_sao.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/steer_sao"]
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
