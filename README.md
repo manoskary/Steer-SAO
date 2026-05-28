@@ -107,15 +107,14 @@ The Space `requirements.txt` installs only public dependencies. On startup, `app
 the local `src/` tree to Python and installs `stable-audio-3` with `GITHUB_TOKEN` if it is
 not already available. Override the source with `STEER_SAO_STABLE_AUDIO_3_REPO` or
 `STEER_SAO_STABLE_AUDIO_3_REF` only when changing the pinned upstream dependency.
-Keep the PyTorch requirements on the CUDA 12.8 wheel index for ZeroGPU Blackwell hardware;
-the default PyPI CUDA 12.6 build does not include `sm_120` kernels.
+Keep the PyTorch requirements on a ZeroGPU-supported CUDA 12.8-backed release for Blackwell
+hardware; older PyTorch 2.7.x wheels do not include `sm_120` kernels.
 If the Gradio Space is a separate repository that installs Steer-SAO from GitHub, its
 `requirements.txt` must preinstall the matching CUDA wheels before `steer-sao`, for example:
 
 ```text
---extra-index-url https://download.pytorch.org/whl/cu128
-torch==2.8.0+cu128
-torchaudio==2.8.0+cu128
+torch==2.8.0
+torchaudio==2.8.0
 gradio==6.15.0
 huggingface_hub>=0.36.0
 steer-sao @ git+https://github.com/manoskary/Steer-SAO.git@main
