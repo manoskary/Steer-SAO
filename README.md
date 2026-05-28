@@ -33,7 +33,8 @@ The target model is gated. Authenticate outside the repo:
 huggingface-cli login
 ```
 
-or set `HF_TOKEN` in your shell. Do not put real tokens in tracked files.
+or set `HF_TOKEN` in your shell. If the pinned upstream SA3 dependency is private, make
+sure local Git can read it via your credential helper. Do not put real tokens in tracked files.
 
 ## Usage
 
@@ -74,6 +75,38 @@ steer-sao generate \
   --controls melody_stereo,rhythm,dynamics \
   --out generated_audio/out.wav
 ```
+
+Launch the Gradio app on GPU 9:
+
+```bash
+python scripts/gradio_app.py \
+  --checkpoint checkpoints/mcl_sa3_all_controls_cc0_full_lr2e6_step_020000.safetensors \
+  --gpu-index 9
+```
+
+Launch with the default local checkpoint and automatic device selection:
+
+```bash
+python scripts/gradio_app.py
+```
+
+For a Hugging Face Space, `app.py` exposes the Gradio `demo`. Keep the adapter checkpoint in
+a private model repo and add both secrets:
+
+- `GITHUB_TOKEN`: read access to private GitHub dependencies such as `stable-audio-3`.
+- `HF_TOKEN`: read access to the private Hugging Face checkpoint repo and gated base model.
+
+Then set:
+
+```bash
+STEER_SAO_CHECKPOINT_REPO=manoskary/sao3-small-control
+STEER_SAO_CHECKPOINT_FILENAME=mcl_sa3_all_controls_cc0_full_lr2e6_step_020000.safetensors
+```
+
+The Space `requirements.txt` installs only public dependencies. On startup, `app.py` adds
+the local `src/` tree to Python and installs `stable-audio-3` with `GITHUB_TOKEN` if it is
+not already available. Override the source with `STEER_SAO_STABLE_AUDIO_3_REPO` or
+`STEER_SAO_STABLE_AUDIO_3_REF` only when changing the pinned upstream dependency.
 
 ## Manifest Schema
 

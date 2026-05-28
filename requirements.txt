@@ -1,0 +1,12 @@
+# Hugging Face Spaces installs this file before app.py runs. Keep the private
+# GitHub dependency out of build-time resolution; app.py installs stable-audio-3
+# with GITHUB_TOKEN when the Space starts.
+torch==2.7.1
+torchaudio==2.7.1
+gradio>=5.0.0
+huggingface_hub>=0.36.0
+numpy>=2.2.6
+soundfile>=0.13.1
+safetensors>=0.7.0
+einops>=0.8.2
+PyYAML>=6.0.2
