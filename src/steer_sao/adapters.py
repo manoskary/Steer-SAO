@@ -115,14 +115,15 @@ class DecoupledCrossAttentionAdapter(nn.Module):
         if control_tokens.ndim != 3:
             raise ValueError("control_tokens must have shape [batch, tokens, channels]")
 
-        control_tokens = control_tokens.to(device=query_input.device, dtype=query_input.dtype)
+        adapter_dtype = self.to_k.weight.dtype
+        control_tokens = control_tokens.to(device=query_input.device, dtype=adapter_dtype)
         if self.position_encoding:
             control_tokens = add_fractional_positions(control_tokens)
 
         q_projected = base_attention.to_q(query_input)
         if getattr(base_attention, "differential", False):
             q_projected = q_projected.chunk(2, dim=-1)[0]
-        q = _shape_as_heads(q_projected, self.num_heads)
+        q = _shape_as_heads(q_projected, self.num_heads).to(dtype=adapter_dtype)
         k = _shape_as_heads(self.to_k(control_tokens), self.kv_heads)
         v = _shape_as_heads(self.to_v(control_tokens), self.kv_heads)
 
@@ -144,7 +145,7 @@ class DecoupledCrossAttentionAdapter(nn.Module):
             padding_mask=padding_mask,
             varlen_metadata=None,
         )
-        return self.to_out(_merge_heads(attended))
+        return self.to_out(_merge_heads(attended)).to(dtype=query_input.dtype)
 
 
 class MuseControlCrossAttention(nn.Module):
@@ -256,6 +257,13 @@ def resolve_dit_root(model) -> nn.Module:
     raise TypeError("Could not resolve an SA3 DiffusionTransformer root from %r" % type(model))
 
 
+def _canonical_adapter_module_name(name: str) -> str:
+    name = name.replace(".inner.", ".")
+    if name.startswith("inner."):
+        name = name[len("inner.") :]
+    return name
+
+
 class MuseControlAdapterManager(nn.Module):
     def __init__(self, config: AdapterConfig) -> None:
         super().__init__()
@@ -269,7 +277,11 @@ class MuseControlAdapterManager(nn.Module):
             if isinstance(block.cross_attn, MuseControlCrossAttention):
                 count += 1
                 continue
-            block.cross_attn = MuseControlCrossAttention(block.cross_attn, self.config, name)
+            reference_parameter = next(block.cross_attn.parameters(), None)
+            wrapped = MuseControlCrossAttention(block.cross_attn, self.config, name)
+            if reference_parameter is not None:
+                wrapped.to(device=reference_parameter.device)
+            block.cross_attn = wrapped
             self.installed_layers.append(name)
             count += 1
         if count == 0:
@@ -292,11 +304,12 @@ class MuseControlAdapterManager(nn.Module):
         state: Dict[str, torch.Tensor] = {}
         for name, module in model.named_modules():
             if isinstance(module, MuseControlCrossAttention):
+                module_name = _canonical_adapter_module_name(name)
                 module_state = module.state_dict()
                 for key, value in module_state.items():
                     if key.startswith("base_attention."):
                         continue
-                    state[prefix + name + "." + key] = value.detach().cpu()
+                    state[prefix + module_name + "." + key] = value.detach().cpu()
         return state
 
     @staticmethod
@@ -315,6 +328,8 @@ class MuseControlAdapterManager(nn.Module):
         missing_layers = []
         for module_name, module_state in grouped.items():
             module = own.get(module_name)
+            if module is None and "inner." in module_name:
+                module = own.get(_canonical_adapter_module_name(module_name))
             if module is None:
                 missing_layers.append(module_name)
                 continue
@@ -325,4 +340,3 @@ class MuseControlAdapterManager(nn.Module):
 
 def trainable_adapter_parameters(model) -> List[nn.Parameter]:
     return [p for p in model.parameters() if p.requires_grad]
-
