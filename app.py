@@ -92,6 +92,7 @@ def _install_stable_audio_3() -> None:
         "install",
         "--disable-pip-version-check",
         "--no-cache-dir",
+        "--no-deps",
         package,
     ]
 
